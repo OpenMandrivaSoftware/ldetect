@@ -46,10 +46,19 @@ pci_probe()
   for (auto i = 0; i < entries.size(); i++) {
     const ldetect::pciEntry &e = entries[i];
 
+    std::string kmodules;
+    if (!e.kmodules.empty())
+        for (std::vector<std::string>::const_iterator it = e.kmodules.begin();
+                it != e.kmodules.end(); ++it) {
+            if (!kmodules.empty())
+                kmodules += ",";
+            kmodules += *it;
+        }
+
     snprintf(buf, sizeof(buf), "%04x\t%04x\t%04x\t%04x\t%d\t%d\t%d\t%d\t%d\t%d\t%s\t%s\t%s\t%s", 
 	e.vendor, e.device, e.subvendor, e.subdevice, e.pci_domain, e.bus,
 	e.pciusb_device, e.pci_function, e.pci_revision, e.is_pciexpress,
-	ldetect::pci_class2text(e.class_id).c_str(), e.class_type.c_str(), e.module.empty() ? "unknown" : e.module.c_str(), e.text.c_str());
+	ldetect::pci_class2text(e.class_id).c_str(), e.class_type.c_str(), (kmodules.empty() ? (e.module.empty() ? "unknown" : e.module.c_str()) : kmodules.c_str()), e.text.c_str());
     PUSHs(sv_2mortal(newSVpv(buf, 0)));
   }
 
@@ -64,10 +73,20 @@ usb_probe()
   EXTEND(SP, entries.size());
   for (auto i = 0; i < entries.size(); i++) {
     const ldetect::usbEntry &e = entries[i];
+
+    std::string kmodules;
+    if (!e.kmodules.empty())
+        for (std::vector<std::string>::const_iterator it = e.kmodules.begin();
+                it != e.kmodules.end(); ++it) {
+            if (!kmodules.empty())
+                kmodules += ",";
+            kmodules += *it;
+        }
+
     ldetect::usb_class_text class_text = ldetect::usb_class2text(e.class_id);
     snprintf(buf, sizeof(buf), "%04x\t%04x\t%s|%s|%s\t%s\t%s\t%d\t%d\t%d", 
 	e.vendor, e.device, class_text.class_text.c_str(), class_text.sub_text.c_str(),
-	class_text.prot_text.c_str(), e.module.empty() ? "unknown" : e.module.c_str(), e.text.c_str(),
+	class_text.prot_text.c_str(), (kmodules.empty() ? (e.module.empty() ? "unknown" : e.module.c_str()) : kmodules.c_str()), e.text.c_str(),
 	e.bus, e.pciusb_device, e.usb_port);
     PUSHs(sv_2mortal(newSVpv(buf, 0)));
   }
