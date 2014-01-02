@@ -34,7 +34,7 @@ VERSION=$(LIB_MAJOR).$(LIB_MINOR)
 
 prefix = /usr
 bindir = $(prefix)/bin
-libdir = $(prefix)/lib
+libdir = $(prefix)/$(lib)
 includedir = $(prefix)/include
 
 binaries = lspcidrake
@@ -87,8 +87,7 @@ install: $(binaries) $(libraries)
 	sed -e "s#@PREFIX@#$(prefix)#g" -e "s#@LIBDIR@#$(libdir)#g" -e "s#@INCLUDEDIR@#$(includedir)#g" \
 		-e "s#@VERSION@#$(VERSION)#g" ldetect.pc.in > $(DESTDIR)$(libdir)/pkgconfig/ldetect.pc
 
-dist: dis
-dis ../$(NAME)-$(VERSION).tar.xz: tar
+dist: dist-git
 
 tar:
 	@if [ -e ".svn" ]; then \
@@ -99,7 +98,6 @@ tar:
 		echo "Unknown SCM (not SVN nor GIT)";\
 		exit 1; \
 	fi;
-	$(info $(NAME)-$(VERSION).tar.xz is ready)
 
 dist-svn:
 	svn export -q -rBASE . $(NAME)-$(VERSION)
@@ -107,7 +105,7 @@ dist-svn:
 	rm -rf $(NAME)-$(VERSION)
 
 dist-git:
-	@git archive --prefix=$(NAME)-$(VERSION)/ HEAD | xz >../$(NAME)-$(VERSION).tar.xz;
+	git archive --prefix=$(NAME)-$(VERSION)/ HEAD | xz -v > $(NAME)-$(VERSION).tar.xz
 
 
 log:

@@ -152,17 +152,15 @@ void pci::findModules(std::string &&fpciusbtable, bool descr_lookup) {
             std::string sysDir = std::string("/sys/bus/pci/devices/").append(devname.str());
             char buf[1024];
             ssize_t n = readlink(sysDir.append("/driver").c_str(), buf, 1024);
-            if(n < 0)
+            if(n > 0) {
               buf[0] = 0;
-            else 
-              buf[n] = 0;
 
-            char* drv;
-            if ((drv = strrchr(buf, '/')))
-              e.module = drv +1;
-            else
-              e.module = buf;
-
+              char* drv;
+              if ((drv = strrchr(buf, '/')))
+                  e.module = drv +1;
+              else
+                  e.module = buf;
+            }
 	    std::ifstream f(sysDir.append("/modalias").c_str());
 	    if (f.is_open()) {
 		std::string modalias;
