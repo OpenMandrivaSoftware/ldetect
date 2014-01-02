@@ -29,7 +29,7 @@ ldetect_srcdir ?= .
 ifndef MDK_STAGE_ONE
 NAME = ldetect
 LIB_MAJOR = 0.13
-LIB_MINOR = 5
+LIB_MINOR = 4
 VERSION=$(LIB_MAJOR).$(LIB_MINOR)
 
 prefix = /usr
@@ -108,8 +108,23 @@ dist-git:
 	git archive --prefix=$(NAME)-$(VERSION)/ HEAD | xz -v > $(NAME)-$(VERSION).tar.xz
 
 
-log:
-	svn2cl --authors ../common/username.xml --accum
+log: ChangeLog
+
+ChangeLog:
+	@if test -d "$$PWD/.git"; then \
+	 git --no-pager log --format="%ai %aN %n%n%x09* %s%d%n" > $@.tmp \
+	 && mv -f $@.tmp $@ \
+	 && git commit ChangeLog -m 'generated changelog' \
+	 && if [ -e ".git/svn" ]; then \
+	   git svn dcommit ; \
+	   fi \
+	  || (rm -f  $@.tmp; \
+	 echo Failed to generate ChangeLog, your ChangeLog may be outdated >&2; \
+	 (test -f $@ || echo git-log is required to generate this file >> $@)); \
+	else \
+	 svn2cl --accum --authors ../common/username.xml; \
+	 rm -f *.bak;  \
+	fi;
 
 run: lspcidrake
 	LD_LIBRARY_PATH=$(PWD)  ./lspcidrake
