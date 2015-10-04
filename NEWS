@@ -1,7 +1,34 @@
-Version 0.13.4 - 23 June 2013, by Bernhard Rosenkränzer
+Version 0.13.11 - 6 December 2014, by Per Øyvind Karlsen
 
-- Don't crash when probing DMI entries that don't have corresponding
-  kernel modules
+- allow lspcidrake to work even without pci bus available (ie. on arm)
+
+Version 0.13.10 - 6 December 2014, by Per Øyvind Karlsen
+
+- minor fixes for LTO to work
+
+Version 0.13.8 - 12 January 2013, by Per Øyvind Karlsen
+
+- store different kind of driver names that starts with ie. 'Card:' in a
+  separate 'card' member string to make sure to always export it at same
+  place
+
+Version 0.13.7 - 30 November 2013, by Per Øyvind Karlsen
+
+- get driver in use from sysfs (Crispin Boylan)
+
+Version 0.13.6 -  6 May 2013, by Per Øyvind Karlsen
+
+- fix detecting some USB devices due to not reporting their class (mga#9674)
+
+Version 0.13.5 - 30 April 2013, by Per Øyvind Karlsen
+
+- place variables in hash map in stead of array
+
+Version 0.13.4 - 23 April 2013, by Per Øyvind Karlsen
+
+- check if modalias resolves to any modules before trying to list it
+- do not fake Xen blk & net controllers on dom0 (mga#9546)
+- add support for detecting Xen blk & net controllers (mga#9546)
 
 Version 0.13.3 - 15 March 2013, by Per Øyvind Karlsen
 

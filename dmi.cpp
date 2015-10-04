@@ -11,6 +11,12 @@
 
 namespace ldetect {
 
+dmi::dmi() {
+}
+
+dmi::~dmi() {
+}
+
 void dmi::probe(void)
 {
     struct dmiTable {
@@ -106,7 +112,7 @@ void dmi::probe(void)
 	    std::string modalias;
 	    getline(f, modalias);
 	    std::vector<std::string> kmodules = modalias_resolve_modules(ctx, modalias);
-	    if(kmodules.size() > 0) {
+	    if (!kmodules.empty()) {
 		const std::string modname = kmodules.front();
 
 		if (!modname.empty()) 

@@ -2,6 +2,7 @@ extern "C" {
 #include <pci/pci.h>
 }
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <dirent.h>
 #include <pci/header.h>
 #include <libkmod.h>
@@ -130,6 +131,46 @@ void pci::probe(void) {
 	}
     }
 
+    // fake two PCI controllers for xen
+    struct stat sb;
+    if (!stat("/sys/bus/xen", &sb)) {
+	// FIXME: use C++ streams..
+	FILE *f;
+	if ((f = fopen("/sys/hypervisor/uuid", "r"))) {
+	    char buf[38];
+	    fgets(buf, sizeof(buf) - 1, f);
+	    fclose(f);
+	    if (strncmp(buf, "00000000-0000-0000-0000-000000000000", sizeof(buf))) {
+		// We're now sure to be in a Xen guest:
+		{
+		    _entries.push_back(pciEntry());
+		    pciEntry &e = _entries.back();
+		    e.text.append("XenSource, Inc.|Block Frontend");
+		    e.class_id = 0x0106; // STORAGE_SATA
+
+		    e.vendor =  0x1a71; // XenSource
+		    e.device =  0xfffa; // fake
+		    e.subvendor = 0;
+		    e.subdevice = 0;
+		    e.class_id = 0x0106;
+		    e.module = "xen_blkfront";
+		}
+		{
+		    _entries.push_back(pciEntry());
+		    pciEntry &e = _entries.back();
+		    e.text.append("XenSource, Inc.|Network Frontend");
+		    e.class_id = 0x0200; // NETWORK_ETHERNET
+
+		    e.vendor =  0x1a71; // XenSource
+		    e.device =  0xfffb; // fake
+		    e.subvendor = 0;
+		    e.subdevice = 0;
+		    e.class_id = 0x0200;
+		    e.module = "xen_netfront";
+		}
+	    }
+	}
+    }
     findModules("pcitable", false);
 }
 
@@ -142,25 +183,25 @@ void pci::findModules(std::string &&fpciusbtable, bool descr_lookup) {
 	pciEntry &e = *it;
 
 	// No special case found in pcitable ? Then lookup modalias for PCI devices
-	if (!e.module.empty() && (e.module != "unknown" && e.module.find_first_of(':') == std::string::npos))
+	if (!e.module.empty() && (e.module != "unknown" && e.card.empty()))
 	    continue;
 	{
 	    std::ostringstream devname(std::ostringstream::out);
 	    devname << hexFmt(e.pci_domain, 4, false) << ":" <<  hexFmt(e.bus, 2, false) <<
 		":" << hexFmt(e.pciusb_device, 2, false) << "." << hexFmt(e.pci_function, 0, false);
 
-            std::string sysDir = std::string("/sys/bus/pci/devices/").append(devname.str());
-            char buf[1024];
-            ssize_t n = readlink(sysDir.append("/driver").c_str(), buf, 1024);
-            if(n > 0) {
-              buf[0] = 0;
+	    std::string sysDir = std::string("/sys/bus/pci/devices/").append(devname.str());
+	    char buf[1024];
+	    ssize_t n = readlink(std::string(sysDir + "/driver").c_str(), buf, sizeof(buf));
+	    if(n > 0) {
+		buf[n] = 0;
 
-              char* drv;
-              if ((drv = strrchr(buf, '/')))
-                  e.module = drv +1;
-              else
-                  e.module = buf;
-            }
+		char* drv;
+		if ((drv = strrchr(buf, '/')))
+		    e.module = drv + 1;
+		else
+		    e.module = buf;
+	    }
 	    std::ifstream f(sysDir.append("/modalias").c_str());
 	    if (f.is_open()) {
 		std::string modalias;

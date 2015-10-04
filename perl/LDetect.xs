@@ -18,6 +18,7 @@ HV* common_pciusb_hash_init(const ldetect::pciusbEntry &e) {
   hv_store(rh, "subvendor",      9, newSVnv(e.subvendor),  0); 
   hv_store(rh, "id",             2, newSVnv(e.device),     0); 
   hv_store(rh, "subid",          5, newSVnv(e.subdevice),  0); 
+  hv_store(rh, "card",           4, newSVpv(e.card.c_str(), 0), 0);
   hv_store(rh, "driver",         6, newSVpv(!e.module.empty() ? e.module.c_str() : (!e.kmodules.empty() ? e.kmodules.front().c_str() : "unknown"), 0), 0);
   hv_store(rh, "description",   11, newSVpv(e.text.c_str(), 0),    0); 
   hv_store(rh, "pci_bus",        7, newSVnv(e.bus),    0); 
@@ -58,16 +59,6 @@ pci_probe()
   EXTEND(SP, entries.size());
   for (auto i = 0; i < entries.size(); i++) {
     const ldetect::pciEntry &e = entries[i];
-
-    std::string kmodules;
-    if (!e.kmodules.empty())
-        for (std::vector<std::string>::const_iterator it = e.kmodules.begin();
-                it != e.kmodules.end(); ++it) {
-            if (!kmodules.empty())
-                kmodules += ",";
-            kmodules += *it;
-        }
-
     HV * rh = common_pciusb_hash_init(e);
     hv_store(rh, "pci_domain",    10, newSVnv(e.pci_domain),      0);
     hv_store(rh, "pci_function",  12, newSVnv(e.pci_function),    0);
@@ -89,16 +80,6 @@ usb_probe()
   EXTEND(SP, entries.size());
   for (auto i = 0; i < entries.size(); i++) {
     const ldetect::usbEntry &e = entries[i];
-
-    std::string kmodules;
-    if (!e.kmodules.empty())
-        for (std::vector<std::string>::const_iterator it = e.kmodules.begin();
-                it != e.kmodules.end(); ++it) {
-            if (!kmodules.empty())
-                kmodules += ",";
-            kmodules += *it;
-        }
-
     ldetect::usb_class_text s = ldetect::usb_class2text(e.class_id);
     snprintf(buf, sizeof(buf), "%s|%s|%s", s.class_text.c_str(), s.sub_text.c_str(), s.prot_text.c_str());
     HV * rh = common_pciusb_hash_init(e);
@@ -118,7 +99,6 @@ dmi_probe()
   EXTEND(SP, entries.size());
   for (auto i = 0; i < entries.size(); i++) {
     const ldetect::entry &e = entries[i];
-
     HV * rh = (HV *)sv_2mortal((SV *)newHV()); 
     hv_store(rh, "driver",         6, newSVpv(!e.module.empty() ? e.module.c_str() : (!e.kmodules.empty() ? e.kmodules.front().c_str() : "unknown"), 0), 0);
     hv_store(rh, "description", 11, newSVpv(e.text.c_str(), 0),  0); 
@@ -137,7 +117,6 @@ hid_probe()
   EXTEND(SP, entries.size());
   for (auto i = 0; i < entries.size(); i++) {
     const ldetect::entry &e = entries[i];
-
     HV * rh = (HV *)sv_2mortal((SV *)newHV()); 
     hv_store(rh, "driver",         6, newSVpv(!e.module.empty() ? e.module.c_str() : (!e.kmodules.empty() ? e.kmodules.front().c_str() : "unknown"), 0), 0);
     hv_store(rh, "description", 11, newSVpv(e.text.c_str(), 0),  0); 

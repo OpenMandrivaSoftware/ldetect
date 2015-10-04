@@ -11,6 +11,12 @@
 
 namespace ldetect {
 
+hid::hid() {
+}
+
+hid::~hid() {
+}
+
 void hid::probe(void)
 {
     const std::string hidDevs("/sys/bus/hid/devices/");
@@ -31,7 +37,8 @@ void hid::probe(void)
 	    std::string modalias;
 	    getline(f, modalias);
 	    std::vector<std::string> kmodules = modalias_resolve_modules(ctx, modalias);
-	    modname = kmodules.front();
+	    if (!kmodules.empty())
+		modname = kmodules.front();
 	    f.close();
 	}
 
